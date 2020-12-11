@@ -1,0 +1,171 @@
+---
+title: "Project 2: Modeling, Testing, and Predicting"
+author: "Dylan Olivo (rdo374)"
+date: "2020-11-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+ My dataset includes numerical, categorical, and binary variables about police-reported car accidents that resulted in a harmful event and at least one car was towed in the year 1999. I found this interesting because people can be reckless drivers and I wanted to see the information on these accidents because I was also born in 1999. Thisdata is  pertaining to the front seat occupant at the time of the accident. My numerical variables are the observation weight and the age of the occupants, my categorical variable is the estimated impact speed range that the vehicle was going, and my binary variable is if they are alive(0) or dead(1). Some other variables that I will be including is if the airbags went off and if the occupant had their seatbelt on.
+
+## Question 1
+
+```{r}
+occ <- read.csv("nassCDS1.csv")
+manov <- manova(cbind(weight,ageOFocc)~dvcat, data=occ)
+summary(manov)
+summary.aov(manov)
+library(tidyverse)
+occ%>%group_by(dvcat)%>%summarize(mean(weight),mean(ageOFocc))
+pairwise.t.test(occ$ageOFocc, occ$dvcat, p.adj = "none")
+pairwise.t.test(occ$weight, occ$dvcat, p.adj = "none")
+0.05/13
+library(rstatix)
+group <- occ$dvcat
+DVs <- occ %>% select(weight, ageOFocc)
+sapply(split(DVs, group), mshapiro_test)
+box_m(DVs, group)
+lapply(split(DVs, group), cov)
+```
+
+You are able to see the mean differences between the variables that I chose(speed of impact, weight, and age of occupant). The group that differs is the age of the occupant. I performed 10 t-tests and 2 anovas and 1 manova. The bonneferoni correction factor is 0.00385, showing that there is still a significance. The manova showed that there was a significant difference between the weight and the speed of the accident showing p values less than 0.05.
+## Question 2: Randomization Test
+
+
+```{r}
+cor(occ$weight, occ$ageOFocc)
+summary(aov(weight~ageOFocc, data = occ))
+library(vegan)
+distz <- occ %>% select(weight,ageOFocc) %>% dist()
+SST <- sum(distz^2)/150
+SSW <- occ %>% group_by(dvcat) %>% select(weight,ageOFocc) %>% do(d=dist(.[1:3], "euclidian")) %>% ungroup() %>% summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50) %>% pull
+F_obs <- ((SST-SSW)/3)/(SSW/54)
+
+Fs <- replicate(1000, {
+thatnewnew <- occ %>% mutate(dvcat = sample(dvcat))
+SSW <- SW <-thatnewnew %>% group_by(dvcat) %>% select(weight, ageOFocc) %>% do(d=dist(.[1:3], "euclidian")) %>% ungroup() %>%
+summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50) %>% pull
+((SST-SSW)/3)/(SSW/54)
+})
+{hist(Fs, prob=T); abline(v=F_obs, col = "blue", add = T)}
+mean(Fs>F_obs)
+```
+The null hypothesis is that there is no correlation between weight and age on the speed that the vehicle was going upon impact. The alternative hypothesis is that there would be a significant affect on the speed of a vehicle depending on weight and age. Based on the results after randomization, the p value is 0.0117, less than 0.05, showing that there is a significant difference between weight and age with the speed that the vehicle was going upon impact. 
+
+## Question 3
+```{r}
+agecent <- occ$ageOFocc-mean(occ$ageOFocc, na.rm = T)
+weightcent <- occ$weight-mean(occ$weight, na.rm = T)
+car<-lm(weightcent ~ agecent*dvcat, data=occ)
+summary(car)
+coef(car)
+
+ggplot(data.frame(agecent, weightcent), aes(agecent,weightcent))+geom_point()+geom_smooth(method="lm",se=F)
+cor(agecent, weightcent)
+resids<-car$residuals
+fitvals<-car$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color='red')
+```
+For 3, I created a linear regression model to show any relationship between my numerical values(age and weight) vs the categorical variable (dvcat - "speed). If a person was 0 age and a person is going fast, the intercept was -294.9. The coefficient estimates are showing that they are least likely to get in an accident if the estimates are negative, compared to others. To check if there was linearity or homoskedasticity and there is not an even scatter of points as we are moving down the horizontal that was created in red. There are some significant relations between going slow and very slow with age and weight, with the p-value being less than 0.05. 
+## Question 4
+```{r}
+boot_dat<- sample_frac(occ, replace=T)
+samp_distn<-replicate(5000, {
+boot_dat <- sample_frac(occ, replace=T) 
+fit <- lm(weightcent~agecent*dvcat, data=boot_dat) 
+coef(fit) 
+})
+samp_distn %>% t %>% as.data.frame %>% summarize_all(sd)
+```
+
+## Question 5
+```{r}
+data <- occ%>% mutate(speed=ntile(dvcat,4))
+data$speed <- factor(data$speed, labels=c("slow","normal","fast","very fast"))
+fit1 <- glm(dead ~ speed, data=data, family=binomial(link="logit"))
+summary(fit1)
+library(plotROC)
+ROCplt <- ggplot(data) + geom_roc(aes(d=dead, m=weight), n.cuts = 0)
+ROCplt
+calc_auc(ROCplt)
+```
+
+After fitting a logisitic model to predict the binary variable that shows if the occupant is dead or alive, there is a significance between going normal and fast with p-values less than 0.05. Controlling for these made it significant with the likelihood that an occupant is pronounced dead from the accident.
+
+## Question 6
+
+(couldnt fit below this question) I then performed a logistic regression to predict the binary variable if the occupant was dead or alive and if a seatbelt was present. You are able to see the predictions if the occupant would be dead or not depending on the speed and weight of the accident. The ages show the weights and you are able to see if the person is dead, if seatbelt was present, and if the airbag went off. The AUC before the lasso is 0.615 and the AUC after the variables that lasso selected was 0.617. There were some NaN outputs after this code and it could be due t the variables that I selected and maybe they weren't correctly inputted.
+```{r}
+library(glmnet)
+class_diag <- function(probs,truth){
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  f1=2*(sens*ppv)/(sens+ppv)
+
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1  
+ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,f1,auc)
+}
+
+k=10
+data <- occ%>%sample_frac
+folds <- ntile(1:nrow(data), n=10)
+diags <- NULL
+for(i in 1:k) {
+  train<- data[folds!=i,]
+  test <- data[folds==i,]
+  truth<- test$dead
+  fit<-glm(dead~ageOFocc+dead, data = train, family = "binomial")
+  probs <- predict(fit, newdata=test, type="response")
+  diags <-rbind(diags, class_diag(probs,truth))
+}
+diags%>%summarize_all(mean)
+
+
+#Lasso
+table(dead=data$dead,seatbelt=data$seatbelt)%>%addmargins
+library(glmnet)
+y <- as.matrix(data$dead)
+x <- model.matrix(y~ageOFocc + weight + dvcat + airbag + seatbelt,data=data)[,-1]
+head(x)
+x<- scale(x)
+head(x)
+
+cv <- cv.glmnet(x,y, family = "binomial")
+lasso <- glmnet(x,y, family = "binomial", lambda = cv$lambda.1se)
+coef(lasso)
+
+# 10 fold CV
+k=10
+data <- occ%>%sample_frac
+folds <- ntile(1:nrow(data), n=10)
+diags <- NULL
+for(i in 1:k) {
+  train<- data[folds!=i,]
+  test <- data[folds==i,]
+  truth<- test$dead
+  fit<-glm(dead~ageOFocc+dead, data = train, family = "binomial")
+  probs <- predict(fit, newdata=test, type="response")
+  diags <-rbind(diags, class_diag(probs,truth))
+}
+diags%>%summarize_all(mean)
+
+```

@@ -1,0 +1,116 @@
+---
+title: "Project 1"
+author: "Dylan Olivo (rdo374"
+date: "2020-10-18"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, mesage = F, tidy=TRUE, tidy.opts =list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+## Introduction
+
+  The two datasets I have chosen were the happiness scale numbers of countries and the alcohol consumption that corresponds to those countries to see if there is a correlation between the two. The variables within this are the country, the happines ranking, the happiness score, and the alcohol consumption per capita. The alcohol consumption per capita is divided in three sections: beer, spirits, and wine. I picked this because I knew about the happiest countries and also how alcohol is a depressant, so I am wondering how their alcohol consumption will impact their emotions causing a decrease or increase in happiness. I feel if there is any association, it will be that the countries that drink the least are the most happiest in the long run.
+  
+## Tidying
+  
+  First because my datasets were already tidy, I had to untidy them.I first created a variable, happy, that I then would untidy with the pivot_wider function. I had to repeat this process for my second dataset. I then joined the datasets using the full_join dplyr join function. I joined based off of the Country common variable, but before this some of the data had to be removed a tad bit because there were countries on one dataset that wasn't on the other. This actually helped because the data is now aligned with the respective countries. 
+  
+## Datasets
+
+```{r}
+HappinessAlcoholConsumption <- read.csv("HappinessAlcoholConsumption.csv")
+
+X2016 <- read.csv("2016.csv")
+```
+
+```{r}
+library("tidyverse")
+library(tidyr)
+library(dplyr)
+#Dataset 1:
+happy <- HappinessAlcoholConsumption %>% select(Country:Wine_PerCapita) %>% na.omit()
+untidyhappy <- happy %>% pivot_wider(names_from = "Country", values_from = "Beer_PerCapita")
+tidyhappy <- untidyhappy %>% pivot_longer(cols=c(5:126), names_to = "Country", values_to = "Beer_PerCapita") %>% na.omit()
+tidyhappy
+
+#Dataset 2:
+ X2016 %>% select(Country:HappinessScore) %>% na.omit()
+untidyx2016<- X2016 %>% pivot_wider(names_from = "Country", values_from = "Happiness.Rank")
+tidyx2016 <- untidyx2016 %>% pivot_longer(cols=c(3:124), names_to = "Country", values_to = "Happiness Rank") %>% na.omit()
+tidyx2016
+
+#In order to join:
+fulldata <- X2016%>% full_join(happy) %>% na.omit()
+fulldata
+```
+
+## Wrangling
+
+  The dataset was manipulated using dylpr functions: filter, select, arrange, group_by, mutate, and summarize. I started off by filtering each country by their hemisphere to compare the scores and see if north or south is happier, I then did select() to conclude that more countries with higher scores have higher beer per capita rates. Following that, I used arrange to arrange by region in order to show that Western Europe has higher happiness scores. I then created a new categorical variable that determine if a country was happy or not depending on happiness scores. I then mutated this data with the categorical variable and showed its average in the new data set created. Finally, I summarized and grouped by the country name and showing if their country is considered happy or not. 
+    Based of the results of these summary statistics, the max wine and beer per capita is 370 and 376 respectively along with their minimums being 1. The mean wine and beer per capita is 66.63 and 136.38. But, the standard deviation of these is 88.49 and 104.43.Also, spirits per capita standard deviation is 81.04. The n_distinct of wine and beer per capita is 65 and 99. The minimum spirit per capita is 1. Lastly, the mean spirit per capita is 95.61.
+```{r}
+fulldata %>% filter(Hemisphere=="north")
+fulldata %>% select(Country, HappinessScore, Beer_PerCapita)
+fulldata %>% arrange(Region)
+
+fulldatax <- fulldata[!is.na(fulldata$`Happiness.Rank`), ]
+fulldatax$happiness <- ifelse(fulldatax$`Happiness.Rank` < median(fulldatax$`Happiness.Rank`), "happy", "not happy")
+happiness <- fulldatax$happiness
+fulldatax
+
+fulldatax %>% group_by(happiness)
+fulldatax1 <- fulldatax %>% mutate(average = HappinessScore/Beer_PerCapita )
+fulldatax1
+
+summary <- fulldata %>% summarize(meanhappiness = mean(HappinessScore, na.rm = T), n_rows = n(), n_country = n_distinct(Country))
+summary
+
+fulldatax %>% summary()
+
+fulldatax %>% group_by(Country, happiness) %>% summarize(mean(HappinessScore))
+
+fulldatax %>% group_by(happiness, Wine_PerCapita) %>% summarize(mean(Beer_PerCapita))
+
+fulldatax %>% summarize(max(Wine_PerCapita), max(Beer_PerCapita))
+fulldatax %>% summarize(mean(Wine_PerCapita), mean(Beer_PerCapita))
+fulldatax %>% summarize(sd(Wine_PerCapita), sd(Beer_PerCapita))
+fulldatax %>% summarize(n_distinct(Wine_PerCapita), n_distinct(Beer_PerCapita))
+fulldatax %>% summarize(min(Wine_PerCapita), min(Spirit_PerCapita))
+fulldatax %>% summarize(min(Beer_PerCapita), min(Spirit_PerCapita))
+fulldatax %>% summarize(sd(Wine_PerCapita), sd(Spirit_PerCapita))
+fulldatax %>% summarize(mean(Spirit_PerCapita), mean(Beer_PerCapita))
+  
+```
+## Visualizations
+
+Using ggplot2, I was able to create a heatmap and two seperate plots. The first plot I created was a plot showing the wine per capita in relatin to the beer per capita and showing the happiness scores of those respective countries. It shows that the higher scores are spread out, but have more beer and wine per capita than those with lower scores. 
+  Next, I created a plot to show the countries that are considered "happy"" or "not happy" from creating the categorical variable previously. The plot showed the happiness scores of each of the five countries that I picked. You are able to see the cuttoff where a country is considered to be "not happy".
+```{r}
+library(ggplot2)
+fulldatax %>% select_if(is.numeric) %>% cor %>% as.data.frame %>% rownames_to_column %>% pivot_longer(-1) %>% ggplot(aes(rowname, name, fill = value)) + geom_tile() + geom_text(aes(label = round(value, 2))) +xlab("") + ylab("") + scale_fill_gradient2(high  = "red", low = "goldenrod1" ) + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + ggtitle("Numerical Variables Heat Map")
+
+fulldatax %>% ggplot(aes(x = Wine_PerCapita, y = Beer_PerCapita)) + geom_point(size = 2, aes(color = HappinessScore)) + scale_color_gradient(low = "pink",
+high = "red") + ggtitle("Beer Per Capita and Happiness Score in Countries") + xlab("Wine_PerCapita") + scale_y_continuous(breaks = seq(0, 400, 100)) + scale_x_continuous(breaks = seq(0, 300, 100))
+
+fulldatax %>% filter(Country == "Canada" | Country == "Australia" |
+Country == "Morocco" | Country == "Russia" | Country == "Syria") %>% ggplot(aes(x = Country, y = HappinessScore, fill = Country)) + geom_bar(stat = "summary", fun.y = "mean", position = "dodge") + facet_wrap(~happiness) + ggtitle("Happiness Scores of 5 Different Countries") + theme(axis.text.x = element_blank(), legend.position = "left") + scale_y_continuous(breaks = seq(0, 8, 1))
+```
+
+## Clustering
+
+After creating this cluster graph below, there is a heavily concentrated area in the bottom left of the cluster graph. This concludes that higher Wine and Beer per capita is a factor that leads to these countries having higher happiness scores and being considered happy according to the categorical variables created. In difference, the unhappy countries are those that tend to have lower beer and wine per capita. 
+
+```{r}
+library(cluster)
+pamx <- fulldatax %>% pam(k = 3)
+pamx
+
+clusters <- fulldatax %>% mutate(cluster = as.factor(pamx$clustering))
+clusters %>% ggplot(aes(Beer_PerCapita, Wine_PerCapita, color = happiness, shape = cluster)) + geom_point() + ggtitle("Cluster Graph of Wine and Beer per Capita")
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
