@@ -1,15 +1,35 @@
 ---
-title: Test Post
+title: Blog Post no. 1
 author: ''
-date: '2020-12-10'
+date: '2020-12-11'
 slug: test-post
 categories: []
 tags: []
 description: ''
 ---
 
-# Heading of my post
+# Python and R!
 
-content of post
+After taking this course, I have gained more knowledge about R Studio and began learning about Python! I have learned their differences, but they can still give the same outputs and can intertwine/communicate with one another using reticulate.
 
-## subheading
+## Working With Reticulate
+First, I had to install reticulate from its library. Here is the R Studio code in assigning content to a variable:
+```{r}
+library(reticulate)
+school <- "One More"
+```
+
+Here is the Python code in assigning content to a variable:
+```{python}
+school="Semester! :)"
+print(school)
+```
+
+And finally, here is the code that combines both to create my following message:
+```{python}
+print(r.school,school)
+```
+
+Though their code is different they still serve the same purpose and are able to communicate with eachother creating the message above! I enjoyed this course a lot and would like to thank Dr. Woodward for a great semester. Hook em!
+
+![](/post/2020-12-10-test-post_files/IMG_4736.JPG){width=70%}

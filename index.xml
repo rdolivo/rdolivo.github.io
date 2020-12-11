@@ -6,15 +6,16 @@
     <description>Recent content on My Website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Thu, 10 Dec 2020 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 11 Dec 2020 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Test Post</title>
-      <link>/post/2020/12/10/test-post/</link>
-      <pubDate>Thu, 10 Dec 2020 00:00:00 +0000</pubDate>
+      <title>Blog Post no. 1</title>
+      <link>/post/2020/12/11/test-post/</link>
+      <pubDate>Fri, 11 Dec 2020 00:00:00 +0000</pubDate>
       
-      <guid>/post/2020/12/10/test-post/</guid>
-      <description> Heading of my post content of post
-subheading   </description>
+      <guid>/post/2020/12/11/test-post/</guid>
+      <description>Python and R! After taking this course, I have gained more knowledge about R Studio and began learning about Python! I have learned their differences, but they can still give the same outputs and can intertwine/communicate with one another using reticulate.
+Working With Reticulate First, I had to install reticulate from its library. Here is the R Studio code in assigning content to a variable:
+library(reticulate) school &amp;lt;- &amp;quot;One More&amp;quot; Here is the Python code in assigning content to a variable:</description>
     </item>
     
     <item>
@@ -33,17 +34,6 @@ subheading   </description>
       
       <guid>/project/project1/</guid>
       <description>Introduction The two datasets I have chosen were the happiness scale numbers of countries and the alcohol consumption that corresponds to those countries to see if there is a correlation between the two. The variables within this are the country, the happines ranking, the happiness score, and the alcohol consumption per capita. The alcohol consumption per capita is divided in three sections: beer, spirits, and wine. I picked this because I knew about the happiest countries and also how alcohol is a depressant, so I am wondering how their alcohol consumption will impact their emotions causing a decrease or increase in happiness.</description>
-    </item>
-    
-    <item>
-      <title>Hello R Markdown</title>
-      <link>/post/2015/07/23/hello-r-markdown/</link>
-      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
-      
-      <guid>/post/2015/07/23/hello-r-markdown/</guid>
-      <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
-You can embed an R code chunk like this:
-summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
     </item>
     
     <item>
